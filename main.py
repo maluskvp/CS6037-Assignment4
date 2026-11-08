@@ -62,6 +62,7 @@ if __name__ == "__main__":
   # (a) plot fm(h) against ratio h/m
   plt.figure(figsize=(8,5))
 
+  print("\nPart 1 results:")
   for m in m_val:
 
     h_values = np.linspace(1/m, 1, 200) # evenly space of 1/m to 1
@@ -97,17 +98,28 @@ if __name__ == "__main__":
         VC_int.append(h)
     print(f"Largest integer VC dimension h where R_emp = {emp} is {max(VC_int)}")
   
-
+  print("End of Part 1")
   # P2 - A shattering checker 
+  print("\nPart 2 Results:")
 
+
+  print("End of Part 2")
   # P3 - PAC learning in action: rectangles and thresholds
-
+  print("\nPart 3 Results:")
+  
+  
+  print("End of Part 3")
   # P4 - Structural Risk Minimization versus cross-validation 
+  print("\nPart 4 Results:")
+  
 
   # Initialize training set needed for Part 4
 
   # skeleton code provided
-  # clf = LinearSVC(C=1e4, max_iter=200000).fit(features(x_tr, d), y_tr)
-  # p_test = clf.decision_function(features(x_te, d)) # this is the learned p(x)
-  # y_hat = np.where(p_test > 0, 1, -1) # sign(p(x))
+  clf = LinearSVC(C=1e4, max_iter=200000).fit(features(x_tr, d), y_tr)
+  p_test = clf.decision_function(features(x_te, d)) # this is the learned p(x)
+  y_hat = np.where(p_test > 0, 1, -1) # sign(p(x))
+
+
+  print("End of Part 4")
 
