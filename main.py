@@ -110,16 +110,82 @@ if __name__ == "__main__":
     print(f"Largest integer VC dimension h where R_emp = {emp} is {max(VC_int)}")
   
   print("\nEnd of Part 1")
+
   # P2 - A shattering checker 
   print("\nPart 2 Results:")
 
 
   print("\nEnd of Part 2")
+
   # P3 - PAC learning in action: rectangles and thresholds
   print("\nPart 3 Results:")
-  
+  x1, x2 = 0.2, 0.7
+  y1, y2 = 0.3, 0.6
+  area_c = (x2 - x1) * (y2 - y1) # get the area of c*
+
+  print(f"area(c*) = {area_c}")
+  T = 2000 # number of independent trials
+  m_val = [10,20,50,100,200,500,1000] # range of m
+  e = 0.05
+
+  mean_errors = []
+  probs_R_g_e = []
+  for m in m_val:
+    total_errors = []
+    for i in range(T):
+      points = np.random.uniform(0,1,(m,2)) # get [mx2] uniform points between 0 and 1
+
+      in_c = (
+        (points[:,0] >= x1) & # min x value
+        (points[:,0] <= x2) & # max x value
+        (points[:,1] >= y1) & # min y value
+        (points[:,1] <= y2)   # max y value
+        ) # range for when point will be marked positive
+
+      positive_p = points[in_c] # return all the points that would be positive
+
+      if len(positive_p) == 0:
+        l_area = 0
+      else:
+        l_area = ((np.max(positive_p[:,0]) - np.min(positive_p[:,0])) * (np.max(positive_p[:,1]) - np.min(positive_p[:,1]))) # get the learned area from the max - min of the x and y points
+      
+      total_errors.append(area_c - l_area) # add the error to the array to get mean after looping through T trials
+
+    # get the mean and probabilities of when error > 0.05 (e)
+    mean_error = np.mean(total_errors)
+    prob = np.mean(np.array(total_errors) > e)
+
+    mean_errors.append(mean_error)
+    probs_R_g_e.append(prob)
+  # plot (i) Mean True Error vs m
+  plt.figure(figsize=(8,5))
+  plt.loglog(m_val,mean_errors, label="Mean true error", marker="o")
+  plt.xlabel("Sample size m")
+  plt.ylabel("Mean True Error")
+  plt.title("Mean True Error vs m samples")
+  plt.legend()
+  plt.show()
+
+  # plot (ii) 
+
+  plt.figure(figsize=(8,5))
+
+  plt.plot(m_val,probs_R_g_e, label="P(R > 0.05)", marker="o")
+  plt.axhline(
+    0.05,
+    linestyle=':',
+    label=r"$\delta = 0.05$"
+  ) # (c) add marker for when epsilon = delta = 0.05
+
+  plt.xlabel("Sample size m")
+  plt.ylabel("Fraction of trials where R > 0.05")
+  plt.title("Probability R is greater than 0.05")
+  plt.legend()
+  plt.show()
+
   
   print("\nEnd of Part 3")
+
   # P4 - Structural Risk Minimization versus cross-validation 
   print("\nPart 4 Results:")
   
