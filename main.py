@@ -184,9 +184,8 @@ if __name__ == "__main__":
   plt.show()
 
   # (c) smallest m where P(R > 0.05) < 0.05
-  new_m_vals = range(100,200, 10) # get new range between 100 and 200 to the nearest 10 to find where it first passes the threshold marker (0.05)
-  smallest_ms = []
-  for m in new_m_vals:
+  smallest_ms = 0
+  for m in range(100,200,10): # get new range between 100 and 200 to the nearest 10 to find where it first passes the threshold marker (0.05)
     # repeat (b)
     total_errors = []
     for i in range(T):
@@ -213,9 +212,10 @@ if __name__ == "__main__":
     prob = np.mean(np.array(total_errors) > e)
 
     if prob <= 0.05:
-      smallest_ms.append(m)
+      smallest_ms = m
+      break # since it it iterating from 100 to 200 by 10 the first m that reaches this threshold can end the loop
 
-  print(f"Smallest m where empirical P(R > e) <= delta = {min(smallest_ms)}")
+  print(f"Smallest m where empirical P(R > e) <= delta = {smallest_ms}")
 
   print("\nEnd of Part 3")
 
