@@ -25,7 +25,7 @@ def fm(h,m):
 # squared version of f_m function used for part b
 def squared_fm(r,m):
   lr = 0.05
-  return ( (r * (np.log((2 * m) / r) + 1)) - np.log(lr/4)) / m
+  return (( (r * (np.log((2 * m) / r) + 1)) - np.log(lr/4)) / m) - 1
 
 
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     # (b) find numerically the ration h/m at which f_m(h) = 1
     print("\nPart 1 (b)")
     root_finder = brentq(
-      lambda r: squared_fm(r*m, m) - 1,
+      lambda r: squared_fm(r*m, m),
       10e-6,
       1
     )
