@@ -65,6 +65,7 @@ if __name__ == "__main__":
   print("\nPart 1 results:")
   for m in m_val:
 
+    print(f"\nm = {m} analysis:")
     h_values = np.linspace(1/m, 1, 200) # evenly space of 1/m to 1
     h_over_m = np.round(h_values * m) # round to integers
     h_over_m = np.maximum(h_over_m,1) # make sure h is a positive integer (1 or the value obtained at h_over_m rounded
@@ -72,7 +73,14 @@ if __name__ == "__main__":
     ratio = h_over_m / m # get the ratio of h/m
     fm_values = fm(h_over_m, m) # get f_m(h)
 
+    print(f"Starting Value for ratio h/m = {ratio[0]} where m = {m}")
+    print(f"Ending Value for ratio h/m = {ratio[-1]} where m = {m}")
+
+    print(f"Starting Value for f_m(h) = {fm_values[0]} where m = {m}")
+    print(f"Ending Value for f_m(h) = {fm_values[-1]} where m = {m}")
+
     # (b) find numerically the ration h/m at which f_m(h) = 1
+    print("\nPart 1 (b)")
     root_finder = brentq(
       lambda r: squared_fm(r*m, m) - 1,
       10e-6,
@@ -88,6 +96,9 @@ if __name__ == "__main__":
   plt.legend()
   plt.show()
 
+  print("\nEnd of Part 1 (a) and Part 1 (b)")
+
+  print("\nPart 1 (c)")
   # (c) largest integer VC dimension h where R(a) <= 0.1 and R_emp = 0 and R_emp = 0.05
   R_emp = [0, 0.05] # emp = 0 and 0.05
   for emp in R_emp:
@@ -98,17 +109,17 @@ if __name__ == "__main__":
         VC_int.append(h)
     print(f"Largest integer VC dimension h where R_emp = {emp} is {max(VC_int)}")
   
-  print("End of Part 1")
+  print("\nEnd of Part 1")
   # P2 - A shattering checker 
   print("\nPart 2 Results:")
 
 
-  print("End of Part 2")
+  print("\nEnd of Part 2")
   # P3 - PAC learning in action: rectangles and thresholds
   print("\nPart 3 Results:")
   
   
-  print("End of Part 3")
+  print("\nEnd of Part 3")
   # P4 - Structural Risk Minimization versus cross-validation 
   print("\nPart 4 Results:")
   
@@ -121,5 +132,5 @@ if __name__ == "__main__":
   y_hat = np.where(p_test > 0, 1, -1) # sign(p(x))
 
 
-  print("End of Part 4")
+  print("\nEnd of Part 4")
 
