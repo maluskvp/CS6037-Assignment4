@@ -183,7 +183,40 @@ if __name__ == "__main__":
   plt.legend()
   plt.show()
 
-  
+  # (c) smallest m where P(R > 0.05) < 0.05
+  new_m_vals = range(100,200, 10) # get new range between 100 and 200 to the nearest 10 to find where it first passes the threshold marker (0.05)
+  smallest_ms = []
+  for m in new_m_vals:
+    # repeat (b)
+    total_errors = []
+    for i in range(T):
+      points = np.random.uniform(0,1,(m,2)) # get [mx2] uniform points between 0 and 1
+
+      in_c = (
+        (points[:,0] >= x1) & # min x value
+        (points[:,0] <= x2) & # max x value
+        (points[:,1] >= y1) & # min y value
+        (points[:,1] <= y2)   # max y value
+        ) # range for when point will be marked positive
+
+      positive_p = points[in_c] # return all the points that would be positive
+
+      if len(positive_p) == 0:
+        l_area = 0
+      else:
+        l_area = ((np.max(positive_p[:,0]) - np.min(positive_p[:,0])) * (np.max(positive_p[:,1]) - np.min(positive_p[:,1]))) # get the learned area from the max - min of the x and y points
+      
+      total_errors.append(area_c - l_area) # add the error to the array to get mean after looping through T trials
+
+    # get the mean and probabilities of when error > 0.05 (e)
+    mean_error = np.mean(total_errors)
+    prob = np.mean(np.array(total_errors) > e)
+
+    if prob <= 0.05:
+      smallest_ms.append(m)
+
+  print(f"Smallest m where empirical P(R > e) <= delta = {min(smallest_ms)}")
+
   print("\nEnd of Part 3")
 
   # P4 - Structural Risk Minimization versus cross-validation 
