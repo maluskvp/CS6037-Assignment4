@@ -620,10 +620,6 @@ if __name__ == "__main__":
   print("\nPart 4 Results:")
   P4()
 
-
-
-  print("\nEnd of Part 4")
-
 # Bonus B1
   print("\nBonus B1")
 
