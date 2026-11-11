@@ -6,6 +6,7 @@
 
 # imports for entire file
 import itertools
+import math
 import numpy as np
 from scipy.optimize import linprog, brentq
 from numpy.polynomial.legendre import legvander
@@ -202,6 +203,9 @@ def P3():
 def features(x, d):
   return legvander(x, d)[:, 1:] # columns P_1(x)..P_d(x); constant dropped
 
+# BONUS B1
+def b1(m):
+  return (0.0001 * m) - ((127 * (np.log((2 *m) /127) + 1)) - np.log(0.02/4))
 
 if __name__ == "__main__":
   # P1 - The VC confidence term
@@ -281,10 +285,31 @@ if __name__ == "__main__":
   # Initialize training set needed for Part 4
 
   # skeleton code provided
-  clf = LinearSVC(C=1e4, max_iter=200000).fit(features(x_tr, d), y_tr)
-  p_test = clf.decision_function(features(x_te, d)) # this is the learned p(x)
-  y_hat = np.where(p_test > 0, 1, -1) # sign(p(x))
+  # clf = LinearSVC(C=1e4, max_iter=200000).fit(features(x_tr, d), y_tr)
+  # p_test = clf.decision_function(features(x_te, d)) # this is the learned p(x)
+  # y_hat = np.where(p_test > 0, 1, -1) # sign(p(x))
 
 
   print("\nEnd of Part 4")
 
+  # Bonus B1
+  print("\nBonus B1")
+
+  print(f"Threshold h > 1 + 32ln(1/delta) where delta = 0.02")
+  h_threshold = 1 + 32*np.log(1/0.02)
+  print(f"Threshold h > {math.ceil(h_threshold)}")
+
+  print(f"m given h = 127 and epsilon = 0.01 with m = (h-1)/(32*epsilon)")
+  m = (math.ceil(h_threshold) - 1) / (32 * 0.01)
+  print(f"m = {math.ceil(m)}")
+  print("fm equation with m = 394, lr = delta = 0.02, and h = 127")
+
+  print("Sufficient sample size f_m(127) = 0.01")
+
+  m = brentq(
+      b1,
+      127,
+      1e9
+    )
+
+  print(f"Sufficient sample size m = {m}")
