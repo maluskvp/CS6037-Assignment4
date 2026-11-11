@@ -313,3 +313,5 @@ if __name__ == "__main__":
     )
 
   print(f"Sufficient sample size m = {m}")
+
+  print("\nEnd of B1")
