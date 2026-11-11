@@ -12,6 +12,9 @@ from scipy.optimize import linprog, brentq
 from numpy.polynomial.legendre import legvander
 from sklearn.svm import LinearSVC
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
 
 
 np.random.seed(42) # seed set to 42
@@ -45,11 +48,195 @@ def separable(X, y):
 
 # can_shatter(X) decides whether oriented hyperplanes sign(w · x + b) shatter a point set
 def can_shatter(X):
-  # TODO: loop over all labelings y in itertools.product([-1, 1], repeat=len(X))
-  return
+    # check every possible labeling
+    for labels in itertools.product([-1, 1], repeat=len(X)):
+        y = np.array(labels)
+
+        # stop if one labeling is not separable
+        if not separable(X, y):
+            return False
+
+    return True
+
+
+# part 2 experiments
+
+def rectangle_can_shatter(X):
+    # check every labeling using rectangles
+    for labels in itertools.product([-1, 1], repeat=len(X)):
+        y = np.array(labels)
+        positive = X[y == 1]
+        negative = X[y == -1]
+
+        # all negative points can always be separated
+        if len(positive) == 0:
+            continue
+
+        # find the smallest rectangle around positive points
+        lower = positive.min(axis=0)
+        upper = positive.max(axis=0)
+
+        # check if any negative point is inside
+        inside = np.all(
+            (negative >= lower) & (negative <= upper),
+            axis=1
+        )
+
+        if np.any(inside):
+            return False
+
+    return True
+
+
+def P2():
+    rng = np.random.default_rng(42)
+
+    # part 2a: check if three points can be shattered
+    print("\npart 2a")
+
+    noncollinear = np.array([
+        [0, 0],
+        [1, 0],
+        [0, 1]
+    ])
+
+    collinear = np.array([
+        [0, 0],
+        [1, 0],
+        [2, 0]
+    ])
+
+    print("noncollinear points:", can_shatter(noncollinear))
+    print("collinear points:", can_shatter(collinear))
+
+    # part 2b: test random points in different dimensions
+    print("\npart 2b")
+
+    results = []
+
+    for n in [2, 3, 4, 5]:
+        fractions = []
+
+        for m in [n + 1, n + 2]:
+            shattered = 0
+
+            for i in range(1000):
+                X = rng.standard_normal((m, n))  # generate m points with n features
+
+                if can_shatter(X):
+                    shattered += 1  # count sets that can be shattered
+
+            fractions.append(shattered / 1000)  # fraction out of 1000 trials
+
+        results.append([n, fractions[0], fractions[1]])
+
+        print(
+            f"n={n}: n+1={fractions[0]:.3f}, "
+            f"n+2={fractions[1]:.3f}",
+            flush=True
+        )
+
+    print("\nn | n+1 points | n+2 points")
+
+    for row in results:
+        print(f"{row[0]} | {row[1]:.3f} | {row[2]:.3f}")
+
+    # part 2c: find labelings that a straight line cannot separate
+    print("\npart 2c")
+
+    X_four = rng.standard_normal((4, 2))
+    impossible = []
+
+    for labels in itertools.product([-1, 1], repeat=4):
+        y = np.array(labels)
+
+        if not separable(X_four, y):
+            impossible.append(y)  # save the labeling if no separating line exists
+
+    print("four points:")
+    print(X_four)
+
+    print("nonseparable labelings:")
+
+    for y in impossible:
+        print(y.tolist())
+
+    # check how the four points are arranged
+    from scipy.spatial import ConvexHull
+
+    hull = ConvexHull(X_four)
+
+    if len(hull.vertices) == 4:
+        case = "convex quadrilateral"
+    else:
+        case = "one point inside a triangle"
+
+    print("point arrangement:", case)
+    print("number of nonseparable labelings:", len(impossible))
+
+    # plot one of the nonseparable labelings
+    y_plot = impossible[0]
+
+    plt.figure(figsize=(7, 5))
+
+    for label, color in [(-1, "blue"), (1, "orange")]:
+        mask = y_plot == label  # select points with this label
+
+        plt.scatter(
+            X_four[mask, 0],
+            X_four[mask, 1],
+            c=color,
+            label=f"label {label}",
+            s=100
+        )
+
+    for i, point in enumerate(X_four):
+        plt.annotate(
+            str(i + 1),
+            (point[0], point[1]),
+            xytext=(5, 5),
+            textcoords="offset points"
+        )
+
+    plt.xlabel("feature 1")
+    plt.ylabel("feature 2")
+    plt.title("part 2c: nonseparable labeling")
+    plt.legend()
+    plt.grid(alpha=0.2)
+    plt.tight_layout()
+    plt.savefig("part2c_nonseparable.png", dpi=200)
+    plt.show()
+
+    # part 2d: check shattering using axis-aligned rectangles
+    print("\npart 2d")
+
+    rectangle_points = np.array([
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1]
+    ])
+
+    print(
+        "four rectangle points shattered:",
+        rectangle_can_shatter(rectangle_points)
+    )
+
+    shattered_five = 0
+
+    for i in range(1000):
+        X = rng.standard_normal((5, 2))  # generate five random points
+
+        if rectangle_can_shatter(X):
+            shattered_five += 1  # count sets that can be shattered
+
+    print(
+        "shattered sets out of 1000 five-point sets:",
+        shattered_five
+    )
+
 
 # P3 PAC learning in action: rectangles and thresholds
-
 def P3():
   x1, x2 = 0.2, 0.7
   y1, y2 = 0.3, 0.6
@@ -203,6 +390,158 @@ def P3():
 def features(x, d):
   return legvander(x, d)[:, 1:] # columns P_1(x)..P_d(x); constant dropped
 
+
+def P4():
+    rng = np.random.default_rng(42)
+
+    # generate random training and test samples
+    x_tr = rng.uniform(-1, 1, 200)
+    x_te = rng.uniform(-1, 1, 10000)
+
+    # assign labels based on the sine function
+    y_tr = np.where(np.sin(3 * np.pi * x_tr) >= 0, 1, -1)
+    y_te = np.where(np.sin(3 * np.pi * x_te) >= 0, 1, -1)
+
+    # add 10 percent label noise
+    y_tr[rng.random(len(y_tr)) < 0.1] *= -1
+    y_te[rng.random(len(y_te)) < 0.1] *= -1
+
+    degrees = np.arange(1, 16)
+
+    train_errors = []
+    test_errors = []
+    vc_bounds = []
+    cv_errors = []
+
+    # use five folds to estimate validation error
+    cv = StratifiedKFold(
+        n_splits=5,
+        shuffle=True,
+        random_state=42
+    )
+
+    # test polynomial models with different degrees
+    for d in degrees:
+        X_train = features(x_tr, d)
+        X_test = features(x_te, d)
+
+        model = LogisticRegression(
+            C=1000,
+            max_iter=5000
+        )
+
+        model.fit(X_train, y_tr)
+
+        # calculate training and test errors
+        train_error = np.mean(model.predict(X_train) != y_tr)
+        test_error = np.mean(model.predict(X_test) != y_te)
+
+        # add the vc confidence term to training error
+        bound = train_error + fm(d + 1, len(y_tr))
+
+        # calculate the average validation accuracy
+        scores = cross_val_score(
+            LogisticRegression(C=1000, max_iter=5000),
+            X_train,
+            y_tr,
+            cv=cv,
+            scoring="accuracy"
+        )
+
+        cv_error = 1 - scores.mean()
+
+        train_errors.append(train_error)
+        test_errors.append(test_error)
+        vc_bounds.append(bound)
+        cv_errors.append(cv_error)
+
+    train_errors = np.array(train_errors)
+    test_errors = np.array(test_errors)
+    vc_bounds = np.array(vc_bounds)
+    cv_errors = np.array(cv_errors)
+
+    # display results for each degree
+    print("\npart 4b results")
+    print("degree | train error | vc bound | test error | cv error")
+
+    for i, d in enumerate(degrees):
+        print(
+            f"{d:6d} | "
+            f"{train_errors[i]:11.4f} | "
+            f"{vc_bounds[i]:8.4f} | "
+            f"{test_errors[i]:10.4f} | "
+            f"{cv_errors[i]:8.4f}"
+        )
+
+    # find the best degree using each method
+    srm_degree = int(degrees[np.argmin(vc_bounds)])
+    cv_degree = int(degrees[np.argmin(cv_errors)])
+    test_degree = int(degrees[np.argmin(test_errors)])
+
+    print("\npart 4c results")
+    print("degree selected by srm:", srm_degree)
+    print("degree selected by cross validation:", cv_degree)
+    print("degree with lowest test error:", test_degree)
+
+    # compare training error, vc bound, and test error
+    fig, ax = plt.subplots(figsize=(9, 5))
+
+    ax.plot(
+        degrees,
+        train_errors,
+        marker="o",
+        label="training error"
+    )
+
+    ax.plot(
+        degrees,
+        vc_bounds,
+        marker="s",
+        label="vc bound"
+    )
+
+    ax.plot(
+        degrees,
+        test_errors,
+        marker="^",
+        label="test error"
+    )
+
+    ax.set_xlabel("polynomial degree d")
+    ax.set_ylabel("error")
+    ax.set_title("part 4: srm vs test error")
+    ax.set_xticks(degrees)
+    ax.legend()
+    ax.grid(alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig("part4_srm_comparison.png", dpi=200)
+    plt.show()
+    plt.close(fig)
+
+    # check if the vc bound gives useful values
+    print("\npart 4d results")
+    print("minimum vc bound:", round(float(vc_bounds.min()), 4))
+    print("degrees with vc bound below 0.5:", degrees[vc_bounds < 0.5])
+
+    # compare the polynomial models with 1 nearest neighbor
+    knn = KNeighborsClassifier(n_neighbors=1)
+    knn.fit(x_tr.reshape(-1, 1), y_tr)
+
+    knn_train_error = np.mean(
+        knn.predict(x_tr.reshape(-1, 1)) != y_tr
+    )
+
+    knn_test_error = np.mean(
+        knn.predict(x_te.reshape(-1, 1)) != y_te
+    )
+
+    print("\npart 4e results")
+    print("1nn training error:", round(float(knn_train_error), 4))
+    print("1nn test error:", round(float(knn_test_error), 4))
+
+    print("\nend of part 4")
+
 # BONUS B1
 def b1(m):
   return (0.0001 * m) - ((127 * (np.log((2 *m) /127) + 1)) - np.log(0.02/4))
@@ -266,8 +605,7 @@ if __name__ == "__main__":
 
   # P2 - A shattering checker 
   print("\nPart 2 Results:")
-
-
+  P2()
   print("\nEnd of Part 2")
 
   # P3 - PAC learning in action: rectangles and thresholds
@@ -278,9 +616,9 @@ if __name__ == "__main__":
 
   print("\nEnd of Part 3")
 
-  # P4 - Structural Risk Minimization versus cross-validation 
+  # p4 structural risk minimization versus cross validation
   print("\nPart 4 Results:")
-  
+  P4()
 
   # Initialize training set needed for Part 4
 
@@ -292,26 +630,3 @@ if __name__ == "__main__":
 
   print("\nEnd of Part 4")
 
-  # Bonus B1
-  print("\nBonus B1")
-
-  print(f"Threshold h > 1 + 32ln(1/delta) where delta = 0.02")
-  h_threshold = 1 + 32*np.log(1/0.02)
-  print(f"Threshold h > {math.ceil(h_threshold)}")
-
-  print(f"m given h = 127 and epsilon = 0.01 with m = (h-1)/(32*epsilon)")
-  m = (math.ceil(h_threshold) - 1) / (32 * 0.01)
-  print(f"m = {math.ceil(m)}")
-  print("fm equation with m = 394, lr = delta = 0.02, and h = 127")
-
-  print("Sufficient sample size f_m(127) = 0.01")
-
-  m = brentq(
-      b1,
-      127,
-      1e9
-    )
-
-  print(f"Sufficient sample size m = {m}")
-
-  print("\nEnd of B1")
